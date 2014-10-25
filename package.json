@@ -1,0 +1,14 @@
+{
+  "name": "PowerBlast",
+  "version": "0.0.1",
+  "description": "",
+  "main": "start.sh",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nicholas Hallahan",
+  "license": "BSD",
+  "dependencies": {
+    "pg": "~3.6.2"
+  }
+}
