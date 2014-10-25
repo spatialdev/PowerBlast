@@ -24,7 +24,8 @@ function main() {
       var typeOrStr = typesSeparatedByOrStr(types);
       var sql = sqlTemplate('pop_in_buffer.sql', {
         counter: ++counter,
-        types: typeOrStr
+        types: typeOrStr,
+        table: table
       });
       queryQueue.push({
         types: types,
@@ -112,7 +113,7 @@ function write(dir, fileName, data) {
 
 
 function dequeueAndQuery1() {
-  var queryObj = queryQueue.pop();
+  var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
   var fileName = queryObj.types.join(',');
@@ -143,7 +144,7 @@ function dequeueAndQuery1() {
 }
 
 function dequeueAndQuery2() {
-  var queryObj = queryQueue.pop();
+  var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
   var fileName = queryObj.types.join(',');
@@ -174,7 +175,7 @@ function dequeueAndQuery2() {
 }
 
 function dequeueAndQuery3() {
-  var queryObj = queryQueue.pop();
+  var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
   var fileName = queryObj.types.join(',');
@@ -205,7 +206,7 @@ function dequeueAndQuery3() {
 }
 
 function dequeueAndQuery4() {
-  var queryObj = queryQueue.pop();
+  var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
   var fileName = queryObj.types.join(',');

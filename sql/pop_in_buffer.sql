@@ -5,8 +5,8 @@ CREATE TEMPORARY TABLE _gptemp{{counter}} AS
     SELECT a.id, a.adm1_name, a.adm2_name, a.landuse, a.total_pop, ST_UNION(st_intersection(a.geom,b.geom)) AS geom
     FROM india_land_use_pop a
     INNER JOIN (SELECT ST_Union(ST_transform( ST_BUFFER( ST_transform(geom, 32643), 5000), 4326 )) AS geom
-            FROM cicos_2014
-            WHERE cicos_2014.country = 'India'
+            FROM {{table}}
+            WHERE {{table}}.country = 'India'
                 AND ( {{types}} )
             ) b on
     ST_Intersects(a.geom, b.geom)

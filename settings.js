@@ -6,19 +6,19 @@
 module.exports = {
 
   pointTables: {
-    cicos_2014: [
-      "Commercial Banks",
-      "Offsite ATMs",
-      "Postal Outlets",
-      "Bank Customer Service Points",
-      "MFIs"
+//    cicos_2014: [
+//      "Commercial Banks",
+//      "Offsite ATMs",
+//      "Postal Outlets",
+//      "Bank Customer Service Points",
+//      "MFIs"
+//    ]
+    library_2014: [
+      "Public Library",
+      "Village",
+      "Private Library",
+      "District"
     ]
-//    library_2014: [
-//      "Public Library",
-//      "Village",
-//      "Private Library",
-//      "District"
-//    ],
 //    health_2014: [
 //      "Sub Health Centres",
 //      "ANM or District Training Centres",
