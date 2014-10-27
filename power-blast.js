@@ -13,14 +13,26 @@ var counter = 0; // used for the temporary tables in pop_in_buffer.sql
 
 
 function main() {
+  if (!fs.existsSync('./output/')) {
+    fs.mkdirSync('./output/');
+  }
   var pointTables = settings.pointTables;
   for (var table in pointTables) {
-    fs.mkdirSync('./output/' + table);
+    var tableDir = './output/' + table;
+    if (!fs.existsSync(tableDir)) {
+      fs.mkdirSync(tableDir);
+    }
     var typePowerSet = powerSet( pointTables[table].sort() );
     console.log('Enqueuing power set of queries for ' + table + ' types with a size of ' + typePowerSet.length);
     for (var i = 0, len = typePowerSet.length; i < len; i++) {
       var types = typePowerSet[i];
-      if (types.length === 0) continue;
+      if (types.length === 0) {
+        continue;
+      }
+      var filePath = tableDir + '/' + createFileName(types, pointTables[table]) + '.json';
+      if ( fs.existsSync( filePath )) {
+        continue;
+      }
       var typeOrStr = typesSeparatedByOrStr(types);
       var sql = sqlTemplate('pop_in_buffer.sql', {
         counter: ++counter,
@@ -92,11 +104,22 @@ function write(dir, fileName, data) {
   var json = JSON.stringify(data);
   fs.writeFile('./output/' + dir + '/' + fileName + '.json', json);
   var jsonPretty = JSON.stringify(data, null, 2);
-  fs.writeFile('./output/' + dir + '/' + fileName + '_pretty.json', jsonPretty);
+  fs.writeFile('./output/' + dir + '/' + fileName + 'pretty.json', jsonPretty);
 }
 
 
+function createFileName(types, allTypes) {
+  allTypes = allTypes.sort();
+  var indices = [];
+  for (var k = 0, len = types.length; k < len; ++k) {
+    var type = types[k];
+    var idx = allTypes.indexOf(type);
+    indices.push(idx);
+  }
+  fileName = indices.join(',');
 
+  return fileName;
+}
 
 /**
  * We have 4 functions that do the same thing. This is so that
@@ -116,7 +139,7 @@ function dequeueAndQuery1() {
   var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
-  var fileName = queryObj.types.join(',');
+  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
   console.log('Submitting Query 1: ' + fileName);
@@ -147,7 +170,7 @@ function dequeueAndQuery2() {
   var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
-  var fileName = queryObj.types.join(',');
+  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
   console.log('Submitting Query 2: ' + fileName);
@@ -178,7 +201,7 @@ function dequeueAndQuery3() {
   var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
-  var fileName = queryObj.types.join(',');
+  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
   console.log('Submitting Query 3: ' + fileName);
@@ -209,7 +232,7 @@ function dequeueAndQuery4() {
   var queryObj = queryQueue.shift();
   if (!queryObj) return;
 
-  var fileName = queryObj.types.join(',');
+  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
   console.log('Submitting Query 4: ' + fileName);
