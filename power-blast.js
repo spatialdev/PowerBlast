@@ -142,7 +142,7 @@ function dequeueAndQuery1() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 1: ' + fileName);
+  console.log('Submitting Query 1: ' + queryObj.types.join(','));
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -173,7 +173,7 @@ function dequeueAndQuery2() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 2: ' + fileName);
+  console.log('Submitting Query 2: ' + queryObj.types.join(','));
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -204,7 +204,7 @@ function dequeueAndQuery3() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 3: ' + fileName);
+  console.log('Submitting Query 3: ' + queryObj.types.join(','));
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -235,7 +235,7 @@ function dequeueAndQuery4() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 4: ' + fileName);
+  console.log('Submitting Query 4: ' + queryObj.types.join(','));
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};

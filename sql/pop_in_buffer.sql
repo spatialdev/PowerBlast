@@ -10,7 +10,20 @@ CREATE TEMPORARY TABLE _gptemp{{counter}} AS
                 AND ( {{types}} )
             ) b on
     ST_Intersects(a.geom, b.geom)
+    WHERE a.adm2_name IS NOT NULL
     GROUP BY a.id, a.adm1_name, a.adm2_name, a.landuse, a.total_pop;
+INSERT INTO _gptemp{{counter}} (
+    SELECT a.id, a.adm1_name, NULL, a.landuse, a.total_pop, ST_UNION(st_intersection(a.geom,b.geom)) AS geom
+    FROM india_land_use_pop a
+    INNER JOIN (SELECT ST_Union(ST_transform( ST_BUFFER( ST_transform(geom, 32643), 5000), 4326 )) AS geom
+            FROM {{table}}
+            WHERE {{table}}.country = 'India'
+                AND ( {{types}} )
+            ) b on
+    ST_Intersects(a.geom, b.geom)
+    WHERE a.adm2_name IS NULL
+    GROUP BY a.id, a.adm1_name, a.landuse, a.total_pop
+);
 CREATE INDEX _gptemp{{counter}}_gix ON _gptemp{{counter}} USING GIST (geom);
 END$$;
 
