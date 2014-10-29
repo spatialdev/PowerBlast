@@ -3,7 +3,7 @@
 CREATE TABLE india_land_use_pop AS
 SELECT a.id, a.adm1_name, a.adm2_name,
 	b.landuse,
-	(SELECT SUM((_st_summarystats(ST_Clip(rast,ST_UNION(st_intersection(a.geom,b.geom)), true), 1, true, .99)).sum)
+	(SELECT SUM((_st_summarystats(ST_Clip(rast,ST_UNION(st_intersection(a.geom,b.geom)), true), 1, true, 1)).sum)
 	FROM india_population_raster WHERE ST_Intersects(ST_UNION(st_intersection(a.geom,b.geom)),rast)) as total_pop,
 	ST_UNION(st_intersection(a.geom,b.geom)) AS geom
 FROM gaul_2014_adm2 a
@@ -17,7 +17,7 @@ GROUP BY a.id, a.adm1_name, a.adm2_name,
 INSERT INTO india_land_use_pop (
     SELECT a.id, a.adm1_name, null,
     	b.landuse,
-    	(SELECT SUM((_st_summarystats(ST_Clip(rast,ST_UNION(st_intersection(a.geom,b.geom)), true), 1, true, .99)).sum)
+    	(SELECT SUM((_st_summarystats(ST_Clip(rast,ST_UNION(st_intersection(a.geom,b.geom)), true), 1, true, 1)).sum)
     	FROM india_population_raster WHERE ST_Intersects(ST_UNION(st_intersection(a.geom,b.geom)),rast)) as total_pop,
     	ST_UNION(st_intersection(a.geom,b.geom)) AS geom
     FROM gaul_2014_adm1 a
@@ -80,6 +80,28 @@ GROUP BY _gptemp.id, _gptemp.adm1_name, _gptemp.adm2_name, _gptemp.landuse, _gpt
 
 
 
+-- ALL FSP TYPES
+DO $$DECLARE
+BEGIN
+DROP TABLE IF EXISTS _gptemp;
+CREATE TABLE _gptemp AS
+    SELECT a.id, a.adm1_name, a.landuse, a.total_pop, ST_UNION(st_intersection(a.geom,b.geom)) AS geom
+    FROM india_land_use_pop a
+    INNER JOIN (SELECT ST_Union(ST_transform( ST_BUFFER( ST_transform(geom, 32643), 5000), 4326 )) AS geom
+            FROM cicos_2014
+            WHERE cicos_2014.country = 'India'
+                AND ("type" = 'Commercial Banks' OR "type" = 'Offsite ATMs' OR "type" = 'Bank Customer Service Points' OR "type" = 'Postal Outlets' OR "type" = 'MFIs')
+            ) b on
+    ST_Intersects(a.geom, b.geom)
+    GROUP BY a.id, a.adm1_name, a.landuse, a.total_pop;
+CREATE INDEX _gptemp_gix ON _gptemp USING GIST (geom);
+END$$;
+
+SELECT SUM((_st_summarystats(ST_Clip(rast,_gptemp.geom, true), 1, true, 1)).sum) AS  pop_in_buffer,
+	_gptemp.id, _gptemp.adm1_name, _gptemp.landuse, _gptemp.total_pop
+FROM india_population_raster, _gptemp
+WHERE ST_Intersects(_gptemp.geom,rast)
+GROUP BY _gptemp.id, _gptemp.adm1_name, _gptemp.landuse, _gptemp.total_pop, _gptemp.geom;
 
 
 
