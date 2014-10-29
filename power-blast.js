@@ -142,7 +142,7 @@ function dequeueAndQuery1() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 1: ' + fileName + ' ' + queryObj.types.join('-') );
+  console.log('Submitting Query 1: ' + fileName + ' ' + queryObj.types.join(', ') );
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -157,7 +157,7 @@ function dequeueAndQuery1() {
         delete row.landuse;
       }
       write(queryObj.table, fileName, hash);
-      console.log('Writing Query 1: ' + fileName + ' ' + queryObj.types.join('-'));
+      console.log('Writing Query 1: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery1();
     } else if (err) {
       console.error('query failed: ' + err);
@@ -173,7 +173,7 @@ function dequeueAndQuery2() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 2: ' + fileName + ' ' + queryObj.types.join('-'));
+  console.log('Submitting Query 2: ' + fileName + ' ' + queryObj.types.join(', '));
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -188,7 +188,7 @@ function dequeueAndQuery2() {
         delete row.landuse;
       }
       write(queryObj.table, fileName, hash);
-      console.log('Writing Query 2: ' + fileName + ' ' + queryObj.types.join('-'));
+      console.log('Writing Query 2: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery2();
     } else if (err) {
       console.error('query failed: ' + err);
@@ -204,7 +204,7 @@ function dequeueAndQuery3() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 3: ' + fileName + ' ' + queryObj.types.join('-'));
+  console.log('Submitting Query 3: ' + fileName + ' ' + queryObj.types.join(', '));
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -219,7 +219,7 @@ function dequeueAndQuery3() {
         delete row.landuse;
       }
       write(queryObj.table, fileName, hash);
-      console.log('Writing Query 3: ' + fileName + ' ' + queryObj.types.join('-'));
+      console.log('Writing Query 3: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery3();
     } else if (err) {
       console.error('query failed: ' + err);
@@ -235,7 +235,7 @@ function dequeueAndQuery4() {
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 4: ' + fileName + ' ' + queryObj.types.join('-'));
+  console.log('Submitting Query 4: ' + fileName + ' ' + queryObj.types.join(', '));
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -250,7 +250,7 @@ function dequeueAndQuery4() {
         delete row.landuse;
       }
       write(queryObj.table, fileName, hash);
-      console.log('Writing Query 4: ' + fileName + ' ' + queryObj.types.join('-'));
+      console.log('Writing Query 4: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery4();
     } else if (err) {
       console.error('query failed: ' + err);
