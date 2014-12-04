@@ -16,34 +16,45 @@ function main() {
   if (!fs.existsSync('./output/')) {
     fs.mkdirSync('./output/');
   }
+  for (var j = 0; j < settings.bufferSizes.length; j++) {
+    var bufSize = settings.bufferSizes[j];
+    if (!fs.existsSync('./output/km' + bufSize)) {
+      fs.mkdirSync('./output/km' + bufSize);
+    }
+  }
   var pointTables = settings.pointTables;
   for (var table in pointTables) {
-    var tableDir = './output/' + table;
-    if (!fs.existsSync(tableDir)) {
-      fs.mkdirSync(tableDir);
-    }
-    var typePowerSet = powerSet( pointTables[table].sort() );
-    console.log('Enqueuing power set of queries for ' + table + ' types with a size of ' + typePowerSet.length);
-    for (var i = 0, len = typePowerSet.length; i < len; i++) {
-      var types = typePowerSet[i];
-      if (types.length === 0) {
-        continue;
+    for (var k = 0; k < settings.bufferSizes.length; k++) {
+      var bufSize = settings.bufferSizes[k];
+      var tableDir = './output/km' + bufSize + '/' + table;
+      if (!fs.existsSync(tableDir)) {
+        fs.mkdirSync(tableDir);
       }
-      var filePath = tableDir + '/' + createFileName(types, pointTables[table]) + '.json';
-      if ( fs.existsSync( filePath )) {
-        continue;
+      var typePowerSet = powerSet( pointTables[table].sort() );
+      console.log('Enqueuing ' + bufSize + ' km power set of queries for ' + table + ' types with a size of ' + typePowerSet.length);
+      for (var i = 0, len = typePowerSet.length; i < len; i++) {
+        var types = typePowerSet[i];
+        if (types.length === 0) {
+          continue;
+        }
+        var filePath = tableDir + '/' + createFileName(types, pointTables[table]) + '.json';
+        if ( fs.existsSync( filePath )) {
+          continue;
+        }
+        var typeOrStr = typesSeparatedByOrStr(types);
+        var sql = sqlTemplate('pop_in_buffer.sql', {
+          counter: ++counter,
+          types: typeOrStr,
+          table: table,
+          bufferSize: bufSize
+        });
+        queryQueue.push({
+          types: types,
+          sql: sql,
+          table: table,
+          bufferSize: bufSize
+        });
       }
-      var typeOrStr = typesSeparatedByOrStr(types);
-      var sql = sqlTemplate('pop_in_buffer.sql', {
-        counter: ++counter,
-        types: typeOrStr,
-        table: table
-      });
-      queryQueue.push({
-        types: types,
-        sql: sql,
-        table: table
-      });
     }
   }
 
@@ -100,11 +111,11 @@ function sqlTemplate(sqlFile, tplHash) {
 }
 
 
-function write(dir, fileName, data) {
+function write(bufferSize, dir, fileName, data) {
   var json = JSON.stringify(data);
-  fs.writeFile('./output/' + dir + '/' + fileName + '.json', json);
+  fs.writeFile('./output/km' + bufferSize + '/' + dir + '/' + fileName + '.json', json);
   var jsonPretty = JSON.stringify(data, null, 2);
-  fs.writeFile('./output/' + dir + '/' + fileName + 'pretty.json', jsonPretty);
+  fs.writeFile('./output/km' + bufferSize + '/' + dir + '/' + fileName + 'pretty.json', jsonPretty);
 }
 
 
@@ -156,7 +167,7 @@ function dequeueAndQuery1() {
         delete row.id;
         delete row.landuse;
       }
-      write(queryObj.table, fileName, hash);
+      write(queryObj.bufferSize, queryObj.table, fileName, hash);
       console.log('Writing Query 1: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery1();
     } else if (err) {
@@ -187,7 +198,7 @@ function dequeueAndQuery2() {
         delete row.id;
         delete row.landuse;
       }
-      write(queryObj.table, fileName, hash);
+      write(queryObj.bufferSize, queryObj.table, fileName, hash);
       console.log('Writing Query 2: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery2();
     } else if (err) {
@@ -218,7 +229,7 @@ function dequeueAndQuery3() {
         delete row.id;
         delete row.landuse;
       }
-      write(queryObj.table, fileName, hash);
+      write(queryObj.bufferSize, queryObj.table, fileName, hash);
       console.log('Writing Query 3: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery3();
     } else if (err) {
@@ -249,7 +260,7 @@ function dequeueAndQuery4() {
         delete row.id;
         delete row.landuse;
       }
-      write(queryObj.table, fileName, hash);
+      write(queryObj.bufferSize, queryObj.table, fileName, hash);
       console.log('Writing Query 4: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery4();
     } else if (err) {

@@ -49,6 +49,12 @@ module.exports = {
     ]
   },
 
+  /**
+   * Specify the side of the buffers around the points you want to
+   * generate % population in a buffer around the points.
+   */
+  bufferSizes: [1,2,3,4],
+
   // PostGIS Database Connection
   postgres: {
     server: 'localhost',
