@@ -8,11 +8,11 @@ var settings  = require('./settings.js');
 
 // PostGIS Connection String
 var conString = "postgres://" +
-  settings.postgres.user + ":" +
-  settings.postgres.password + "@" +
-  settings.postgres.server + ":" +
-  settings.postgres.port + "/" +
-  settings.postgres.database;
+    settings.postgres.user + ":" +
+    settings.postgres.password + "@" +
+    settings.postgres.server + ":" +
+    settings.postgres.port + "/" +
+    settings.postgres.database;
 
 module.exports = function(queryStr, cb) {
   pg.connect(conString, function(err, client, done) {
@@ -21,6 +21,7 @@ module.exports = function(queryStr, cb) {
     }
     client.query(queryStr, function(queryerr, result) {
       //call `done()` to release the client back to the pool
+
       done();
 
       if(queryerr) {

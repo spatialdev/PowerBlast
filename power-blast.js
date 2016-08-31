@@ -24,12 +24,21 @@ function main() {
   }
   var pointTables = settings.pointTables;
   for (var table in pointTables) {
+
+    for (place in settings.projections) {
+      if (table.indexOf(place) > -1) {
+        var projection = settings.projections[place];
+        var country = country;
+      }
+    }
+
     for (var k = 0; k < settings.bufferSizes.length; k++) {
       var bufSize = settings.bufferSizes[k];
       var tableDir = './output/km' + bufSize + '/' + table;
       if (!fs.existsSync(tableDir)) {
         fs.mkdirSync(tableDir);
       }
+      // get the power set of the array (but first sort the array alphabetically)
       var typePowerSet = powerSet( pointTables[table].sort() );
       console.log('Enqueuing ' + bufSize + ' km power set of queries for ' + table + ' types with a size of ' + typePowerSet.length);
       for (var i = 0, len = typePowerSet.length; i < len; i++) {
@@ -42,12 +51,18 @@ function main() {
           continue;
         }
         var typeOrStr = typesSeparatedByOrStr(types);
+
+        // parameters we are passing to the sql script
         var sql = sqlTemplate('pop_in_buffer.sql', {
           counter: ++counter,
           types: typeOrStr,
           table: table,
-          bufferSize: bufSize
+          bufferSize: bufSize,
+          projection: projection,
+          country: country
         });
+
+        // queryQueue is an array of objects - one object for each power set
         queryQueue.push({
           types: types,
           sql: sql,
@@ -61,8 +76,8 @@ function main() {
   // We want to do as many queries in parallel as the amount of cores we have in the database.
   dequeueAndQuery1();
   dequeueAndQuery2();
-  dequeueAndQuery3();
-  dequeueAndQuery4();
+  //dequeueAndQuery3();
+  //dequeueAndQuery4();
 }
 
 
@@ -76,6 +91,7 @@ function main() {
  * @param ary
  * @returns {*[]}
  */
+// calculates power set for a given set
 function powerSet(ary) {
   var ps = [[]];
   for (var i=0; i < ary.length; i++) {
@@ -93,7 +109,7 @@ function typesSeparatedByOrStr(typeArr) {
   return str;
 }
 
-
+// adding parameters to sql file (for example, km distance, table, etc.)
 function sqlTemplate(sqlFile, tplHash) {
   var sql = sqlFiles[sqlFile];
   if (!sql) {
@@ -110,7 +126,7 @@ function sqlTemplate(sqlFile, tplHash) {
   return sql;
 }
 
-
+// writing resulting data to json file
 function write(bufferSize, dir, fileName, data) {
   var json = JSON.stringify(data);
   fs.writeFile('./output/km' + bufferSize + '/' + dir + '/' + fileName + '.json', json);
@@ -144,16 +160,16 @@ function createFileName(types, allTypes) {
  */
 
 
-
-
 function dequeueAndQuery1() {
-  var queryObj = queryQueue.shift();
+  var queryObj = queryQueue.shift(); // remove the first object in the queryQueue list
   if (!queryObj) return;
 
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
   console.log('Submitting Query 1: ' + fileName + ' ' + queryObj.types.join(', ') );
+
+  // run sql query in database and parse results
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -163,9 +179,8 @@ function dequeueAndQuery1() {
         if (!hashId) {
           hashId = hash[row.id] = {};
         }
-        hashId[row.landuse] = row;
+        hash[row.id] = row;
         delete row.id;
-        delete row.landuse;
       }
       write(queryObj.bufferSize, queryObj.table, fileName, hash);
       console.log('Writing Query 1: ' + fileName + ' ' + queryObj.types.join(', '));
@@ -178,13 +193,15 @@ function dequeueAndQuery1() {
 }
 
 function dequeueAndQuery2() {
-  var queryObj = queryQueue.shift();
+  var queryObj = queryQueue.shift(); // remove the first object in the queryQueue list
   if (!queryObj) return;
 
   var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
   var query = queryObj.sql;
 
-  console.log('Submitting Query 2: ' + fileName + ' ' + queryObj.types.join(', '));
+  console.log('Submitting Query 1: ' + fileName + ' ' + queryObj.types.join(', ') );
+
+  // run sql query in database and parse results
   Query(query, function(err, res) {
     if (res && res.length > 0) {
       var hash = {};
@@ -194,12 +211,11 @@ function dequeueAndQuery2() {
         if (!hashId) {
           hashId = hash[row.id] = {};
         }
-        hashId[row.landuse] = row;
+        hash[row.id] = row;
         delete row.id;
-        delete row.landuse;
       }
       write(queryObj.bufferSize, queryObj.table, fileName, hash);
-      console.log('Writing Query 2: ' + fileName + ' ' + queryObj.types.join(', '));
+      console.log('Writing Query 1: ' + fileName + ' ' + queryObj.types.join(', '));
       dequeueAndQuery2();
     } else if (err) {
       console.error('query failed: ' + err);
@@ -208,66 +224,66 @@ function dequeueAndQuery2() {
   });
 }
 
-function dequeueAndQuery3() {
-  var queryObj = queryQueue.shift();
-  if (!queryObj) return;
+//function dequeueAndQuery3() {
+//  var queryObj = queryQueue.shift();
+//  if (!queryObj) return;
+//
+//  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
+//  var query = queryObj.sql;
+//
+//  console.log('Submitting Query 3: ' + fileName + ' ' + queryObj.types.join(', '));
+//  Query(query, function(err, res) {
+//    if (res && res.length > 0) {
+//      var hash = {};
+//      for (var j = 0, len = res.length; j < len; j++) {
+//        var row = res[j];
+//        var hashId = hash[row.id];
+//        if (!hashId) {
+//          hashId = hash[row.id] = {};
+//        }
+//        hashId[row.landuse] = row;
+//        delete row.id;
+//        delete row.landuse;
+//      }
+//      write(queryObj.bufferSize, queryObj.table, fileName, hash);
+//      console.log('Writing Query 3: ' + fileName + ' ' + queryObj.types.join(', '));
+//      dequeueAndQuery3();
+//    } else if (err) {
+//      console.error('query failed: ' + err);
+//      process.abort();
+//    }
+//  });
+//}
 
-  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
-  var query = queryObj.sql;
-
-  console.log('Submitting Query 3: ' + fileName + ' ' + queryObj.types.join(', '));
-  Query(query, function(err, res) {
-    if (res && res.length > 0) {
-      var hash = {};
-      for (var j = 0, len = res.length; j < len; j++) {
-        var row = res[j];
-        var hashId = hash[row.id];
-        if (!hashId) {
-          hashId = hash[row.id] = {};
-        }
-        hashId[row.landuse] = row;
-        delete row.id;
-        delete row.landuse;
-      }
-      write(queryObj.bufferSize, queryObj.table, fileName, hash);
-      console.log('Writing Query 3: ' + fileName + ' ' + queryObj.types.join(', '));
-      dequeueAndQuery3();
-    } else if (err) {
-      console.error('query failed: ' + err);
-      process.abort();
-    }
-  });
-}
-
-function dequeueAndQuery4() {
-  var queryObj = queryQueue.shift();
-  if (!queryObj) return;
-
-  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
-  var query = queryObj.sql;
-
-  console.log('Submitting Query 4: ' + fileName + ' ' + queryObj.types.join(', '));
-  Query(query, function(err, res) {
-    if (res && res.length > 0) {
-      var hash = {};
-      for (var j = 0, len = res.length; j < len; j++) {
-        var row = res[j];
-        var hashId = hash[row.id];
-        if (!hashId) {
-          hashId = hash[row.id] = {};
-        }
-        hashId[row.landuse] = row;
-        delete row.id;
-        delete row.landuse;
-      }
-      write(queryObj.bufferSize, queryObj.table, fileName, hash);
-      console.log('Writing Query 4: ' + fileName + ' ' + queryObj.types.join(', '));
-      dequeueAndQuery4();
-    } else if (err) {
-      console.error('query failed: ' + err);
-      process.abort();
-    }
-  });
-}
+//function dequeueAndQuery4() {
+//  var queryObj = queryQueue.shift();
+//  if (!queryObj) return;
+//
+//  var fileName = createFileName(queryObj.types, settings.pointTables[queryObj.table]);
+//  var query = queryObj.sql;
+//
+//  console.log('Submitting Query 4: ' + fileName + ' ' + queryObj.types.join(', '));
+//  Query(query, function(err, res) {
+//    if (res && res.length > 0) {
+//      var hash = {};
+//      for (var j = 0, len = res.length; j < len; j++) {
+//        var row = res[j];
+//        var hashId = hash[row.id];
+//        if (!hashId) {
+//          hashId = hash[row.id] = {};
+//        }
+//        hashId[row.landuse] = row;
+//        delete row.id;
+//        delete row.landuse;
+//      }
+//      write(queryObj.bufferSize, queryObj.table, fileName, hash);
+//      console.log('Writing Query 4: ' + fileName + ' ' + queryObj.types.join(', '));
+//      dequeueAndQuery4();
+//    } else if (err) {
+//      console.error('query failed: ' + err);
+//      process.abort();
+//    }
+//  });
+//}
 
 main();
